@@ -41,6 +41,7 @@ resource "nuclock_project" "apollo" {
 - `description` (String)
 - `key_prefix` (String) What every task key here leads with (`NUC` in `NUC-142`). Guessed from the title when left out. The project's identity: `import { identity = { key_prefix = "NUC" } }`.
 - `manager_ids` (Set of String) The people who run it (users holding the manager role).
+- `owner_ids` (Set of String) The clients it belongs to — their accounts are the product's, made when they are given a project; look them up with the `nuclock_user` data source. Left out, the owners are not managed here.
 
 ### Read-Only
 

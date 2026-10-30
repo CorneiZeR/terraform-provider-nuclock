@@ -100,7 +100,7 @@ func (f *fakeAPI) serve(w http.ResponseWriter, r *http.Request) {
 		answer(w, 200, pageOf(rows))
 	case r.URL.Path == "/v1/project/projects" && r.Method == http.MethodPost:
 		id := f.id("project")
-		p := map[string]any{"id": id, "description": "", "currency": "USD", "manager_ids": []string{}, "is_active": true}
+		p := map[string]any{"id": id, "description": "", "currency": "USD", "manager_ids": []string{}, "owner_ids": []string{}, "is_active": true}
 		for k, v := range body {
 			p[k] = v
 		}

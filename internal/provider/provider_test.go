@@ -230,3 +230,34 @@ resource "nuclock_user" "ann" {
 		},
 	})
 }
+
+// A project's owners are the clients named in the configuration, sent whole.
+func TestProjectOwners(t *testing.T) {
+	fake, server := newFakeAPI(t)
+	owned := func(owners string) string {
+		return fmt.Sprintf(`
+resource "nuclock_project" "p" {
+  title      = "Apollo"
+  key_prefix = "APO"
+  owner_ids  = [%s]
+}
+`, owners)
+	}
+	owners := func(want string) resource.TestCheckFunc {
+		return func(*terraform.State) error {
+			for _, p := range fake.projects {
+				if got := fmt.Sprint(p["owner_ids"]); got != want {
+					return fmt.Errorf("owners %s, want %s", got, want)
+				}
+			}
+			return nil
+		}
+	}
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: factories,
+		Steps: []resource.TestStep{
+			{Config: config(server.URL, owned(`"client-1"`)), Check: owners("[client-1]")},
+			{Config: config(server.URL, owned(`"client-1", "client-2"`)), PlanOnly: false, Check: resource.TestCheckResourceAttr("nuclock_project.p", "owner_ids.#", "2")},
+		},
+	})
+}

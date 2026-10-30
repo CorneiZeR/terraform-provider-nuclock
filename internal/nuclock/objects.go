@@ -15,6 +15,7 @@ type Project struct {
 	KeyPrefix   string   `json:"key_prefix"`
 	Currency    string   `json:"currency"`
 	ManagerIDs  []string `json:"manager_ids"`
+	OwnerIDs    []string `json:"owner_ids"`
 	IsActive    bool     `json:"is_active"`
 }
 

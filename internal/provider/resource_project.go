@@ -33,6 +33,7 @@ type projectModel struct {
 	KeyPrefix   types.String `tfsdk:"key_prefix"`
 	Currency    types.String `tfsdk:"currency"`
 	ManagerIDs  types.Set    `tfsdk:"manager_ids"`
+	OwnerIDs    types.Set    `tfsdk:"owner_ids"`
 }
 
 type projectIdentity struct {
@@ -74,6 +75,15 @@ func (r *projectResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 				Computed:            true,
 				PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
+			"owner_ids": schema.SetAttribute{
+				MarkdownDescription: "The clients it belongs to — their accounts are the product's, made " +
+					"when they are given a project; look them up with the `nuclock_user` data source. " +
+					"Left out, the owners are not managed here.",
+				ElementType:   types.StringType,
+				Optional:      true,
+				Computed:      true,
+				PlanModifiers: []planmodifier.Set{setplanmodifier.UseStateForUnknown()},
+			},
 			"manager_ids": schema.SetAttribute{
 				MarkdownDescription: "The people who run it (users holding the manager role).",
 				ElementType:         types.StringType,
@@ -107,6 +117,11 @@ func (r *projectResource) body(ctx context.Context, plan projectModel) map[strin
 	}
 	if !plan.Currency.IsNull() && !plan.Currency.IsUnknown() {
 		body["currency"] = plan.Currency.ValueString()
+	}
+	if !plan.OwnerIDs.IsNull() && !plan.OwnerIDs.IsUnknown() {
+		var ids []string
+		plan.OwnerIDs.ElementsAs(ctx, &ids, false)
+		body["owner_ids"] = orEmpty(ids)
 	}
 	if !plan.ManagerIDs.IsNull() && !plan.ManagerIDs.IsUnknown() {
 		var ids []string
@@ -234,5 +249,6 @@ func projectState(p *nuclock.Project) projectModel {
 		KeyPrefix:   types.StringValue(p.KeyPrefix),
 		Currency:    types.StringValue(p.Currency),
 		ManagerIDs:  stringSet(p.ManagerIDs),
+		OwnerIDs:    stringSet(p.OwnerIDs),
 	}
 }
