@@ -69,13 +69,13 @@ func (r *seatResource) Schema(_ context.Context, _ resource.SchemaRequest, resp 
 				MarkdownDescription: "Their job here, e.g. `Backend developer`.",
 				Optional:            true,
 				Computed:            true,
-				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+				PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"work_format": schema.StringAttribute{
 				MarkdownDescription: "`hour`, `part` (part-time) or `full` (full-time).",
 				Optional:            true,
 				Computed:            true,
-				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+				PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 				Validators:          []validator.String{stringvalidator.OneOf("hour", "part", "full")},
 			},
 			"area_ids": schema.SetAttribute{
@@ -230,6 +230,12 @@ func (r *seatResource) ImportState(ctx context.Context, req resource.ImportState
 			return
 		}
 		id = seat.ID
+	}
+	if req.ID != "" && !importedExists(ctx, &resp.Diagnostics, "seat", id, func(ctx context.Context, id string) error {
+		_, err := r.client.GetSeat(ctx, id)
+		return err
+	}) {
+		return
 	}
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
 }

@@ -261,6 +261,12 @@ func (r *integrationResource) ImportState(ctx context.Context, req resource.Impo
 		}
 		id = integration.ID
 	}
+	if req.ID != "" && !importedExists(ctx, &resp.Diagnostics, "connection", id, func(ctx context.Context, id string) error {
+		_, err := r.client.GetIntegration(ctx, id)
+		return err
+	}) {
+		return
+	}
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
 }
 

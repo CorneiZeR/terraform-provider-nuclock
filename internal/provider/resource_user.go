@@ -264,6 +264,12 @@ func (r *userResource) ImportState(ctx context.Context, req resource.ImportState
 		}
 		id = user.ID
 	}
+	if req.ID != "" && !importedExists(ctx, &resp.Diagnostics, "person", id, func(ctx context.Context, id string) error {
+		_, err := r.client.GetUser(ctx, id)
+		return err
+	}) {
+		return
+	}
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
 }
 

@@ -325,3 +325,22 @@ resource "nuclock_seat" "ann" {
 		},
 	})
 }
+
+// An import naming an id that does not exist says so, in words — not the
+// framework's "Missing Resource Identity After Read".
+func TestImportOfAMissingIDIsNamed(t *testing.T) {
+	_, server := newFakeAPI(t)
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: factories,
+		Steps: []resource.TestStep{
+			{Config: config(server.URL, team+seat)},
+			{
+				Config:        config(server.URL, team+seat),
+				ResourceName:  "nuclock_seat.ann",
+				ImportState:   true,
+				ImportStateId: "seat-that-is-not-there",
+				ExpectError:   regexp.MustCompile(`No such seat[\s\S]*seat-that-is-not-there`),
+			},
+		},
+	})
+}

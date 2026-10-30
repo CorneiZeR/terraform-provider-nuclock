@@ -58,7 +58,7 @@ func newResetSecondFactorAction() action.Action {
 
 func newResendInvitationAction() action.Action {
 	return &recoveryAction{
-		name:        "resend_invitation",
+		name:       "resend_invitation",
 		clientFlag: true,
 		description: "Send a person their invitation **letter** again — one lost to spam, or read " +
 			"after it expired. A member's by default; `client = true` for a client's.\n\n" +

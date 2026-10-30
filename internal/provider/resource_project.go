@@ -238,6 +238,12 @@ func (r *projectResource) ImportState(ctx context.Context, req resource.ImportSt
 		}
 		id = project.ID
 	}
+	if req.ID != "" && !importedExists(ctx, &resp.Diagnostics, "project", id, func(ctx context.Context, id string) error {
+		_, err := r.client.GetProject(ctx, id)
+		return err
+	}) {
+		return
+	}
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
 }
 
