@@ -13,7 +13,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -82,7 +81,8 @@ func (r *userResource) Schema(_ context.Context, _ resource.SchemaRequest, resp 
 			"public_name": schema.StringAttribute{
 				Optional: true,
 				Computed: true,
-				Default:  stringdefault.StaticString(""),
+				// Left out, it is not managed: a name somebody chose stays theirs.
+				PlanModifiers: kept,
 			},
 			"roles": schema.SetAttribute{
 				MarkdownDescription: "`admin`, `pm` (manager) and/or `executor`.",
@@ -135,9 +135,9 @@ func (r *userResource) Configure(_ context.Context, req resource.ConfigureReques
 func (r *userResource) body(ctx context.Context, plan userModel) map[string]any {
 	var roles []string
 	plan.Roles.ElementsAs(ctx, &roles, false)
-	body := map[string]any{
-		"public_name": plan.PublicName.ValueString(),
-		"roles":       roles,
+	body := map[string]any{"roles": roles}
+	if !plan.PublicName.IsNull() && !plan.PublicName.IsUnknown() {
+		body["public_name"] = plan.PublicName.ValueString()
 	}
 	if !plan.Username.IsNull() && !plan.Username.IsUnknown() {
 		body["username"] = plan.Username.ValueString()

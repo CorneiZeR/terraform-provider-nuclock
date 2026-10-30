@@ -9,7 +9,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
@@ -60,7 +59,8 @@ func (r *projectResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 			"description": schema.StringAttribute{
 				Optional: true,
 				Computed: true,
-				Default:  stringdefault.StaticString(""),
+				// Left out, it is not managed: an import keeps what is there.
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"key_prefix": schema.StringAttribute{
 				MarkdownDescription: "What every task key here leads with (`NUC` in `NUC-142`). Guessed " +
@@ -108,9 +108,9 @@ func (r *projectResource) Configure(_ context.Context, req resource.ConfigureReq
 }
 
 func (r *projectResource) body(ctx context.Context, plan projectModel) map[string]any {
-	body := map[string]any{
-		"title":       plan.Title.ValueString(),
-		"description": plan.Description.ValueString(),
+	body := map[string]any{"title": plan.Title.ValueString()}
+	if !plan.Description.IsNull() && !plan.Description.IsUnknown() {
+		body["description"] = plan.Description.ValueString()
 	}
 	if !plan.KeyPrefix.IsNull() && !plan.KeyPrefix.IsUnknown() {
 		body["key_prefix"] = plan.KeyPrefix.ValueString()

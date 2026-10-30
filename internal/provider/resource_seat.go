@@ -10,7 +10,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -70,13 +69,13 @@ func (r *seatResource) Schema(_ context.Context, _ resource.SchemaRequest, resp 
 				MarkdownDescription: "Their job here, e.g. `Backend developer`.",
 				Optional:            true,
 				Computed:            true,
-				Default:             stringdefault.StaticString(""),
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"work_format": schema.StringAttribute{
 				MarkdownDescription: "`hour`, `part` (part-time) or `full` (full-time).",
 				Optional:            true,
 				Computed:            true,
-				Default:             stringdefault.StaticString("hour"),
+				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 				Validators:          []validator.String{stringvalidator.OneOf("hour", "part", "full")},
 			},
 			"area_ids": schema.SetAttribute{
@@ -109,10 +108,13 @@ func (r *seatResource) Configure(_ context.Context, req resource.ConfigureReques
 
 // terms is everything a seat says about the work, and nothing about money.
 func (r *seatResource) terms(ctx context.Context, plan seatModel) map[string]any {
-	body := map[string]any{
-		"position":    plan.Position.ValueString(),
-		"work_format": plan.WorkFormat.ValueString(),
-		"curator_id":  nil,
+	// Left out, position and work format are not managed: an import keeps them.
+	body := map[string]any{"curator_id": nil}
+	if !plan.Position.IsNull() && !plan.Position.IsUnknown() {
+		body["position"] = plan.Position.ValueString()
+	}
+	if !plan.WorkFormat.IsNull() && !plan.WorkFormat.IsUnknown() {
+		body["work_format"] = plan.WorkFormat.ValueString()
 	}
 	if !plan.CuratorID.IsNull() {
 		body["curator_id"] = plan.CuratorID.ValueString()

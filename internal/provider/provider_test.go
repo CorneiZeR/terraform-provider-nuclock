@@ -261,3 +261,67 @@ resource "nuclock_project" "p" {
 		},
 	})
 }
+
+// What a configuration leaves out is not managed: an import keeps it, and
+// dropping it from the configuration neither clears it nor plans a change.
+func TestWhatIsLeftOutIsKept(t *testing.T) {
+	fake, server := newFakeAPI(t)
+	full := config(server.URL, `
+resource "nuclock_project" "p" {
+  title       = "Apollo"
+  key_prefix  = "APO"
+  description = "Kept"
+}
+resource "nuclock_user" "ann" {
+  email       = "ann@example.com"
+  public_name = "Ann Lee"
+  roles       = ["executor"]
+}
+resource "nuclock_seat" "ann" {
+  project_id  = nuclock_project.p.id
+  user_id     = nuclock_user.ann.id
+  position    = "Engineer"
+  work_format = "full"
+}
+`)
+	bare := config(server.URL, `
+resource "nuclock_project" "p" {
+  title      = "Apollo"
+  key_prefix = "APO"
+}
+resource "nuclock_user" "ann" {
+  email = "ann@example.com"
+  roles = ["executor"]
+}
+resource "nuclock_seat" "ann" {
+  project_id = nuclock_project.p.id
+  user_id    = nuclock_user.ann.id
+}
+`)
+	kept := func(*terraform.State) error {
+		for _, p := range fake.projects {
+			if p["description"] != "Kept" {
+				return fmt.Errorf("description %v", p["description"])
+			}
+		}
+		for _, u := range fake.users {
+			if u["public_name"] != "Ann Lee" {
+				return fmt.Errorf("public_name %v", u["public_name"])
+			}
+		}
+		for _, s := range fake.seats {
+			if s["position"] != "Engineer" || s["work_format"] != "full" {
+				return fmt.Errorf("seat %v / %v", s["position"], s["work_format"])
+			}
+		}
+		return nil
+	}
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: factories,
+		Steps: []resource.TestStep{
+			{Config: full, Check: kept},
+			{Config: bare, PlanOnly: true},
+			{Config: bare, Check: kept},
+		},
+	})
+}
