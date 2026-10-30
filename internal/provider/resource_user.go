@@ -174,6 +174,7 @@ func (r *userResource) Create(ctx context.Context, req resource.CreateRequest, r
 		// Blocked by an earlier destroy: let them back in. Their history,
 		// their seats and their hours never went anywhere.
 		body["is_active"] = true
+		body["roles"] = keepClient(body["roles"].([]string), existing)
 		user, err = r.client.UpdateUser(ctx, existing.ID, body)
 	default:
 		body["email"] = email
@@ -214,7 +215,16 @@ func (r *userResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	user, err := r.client.UpdateUser(ctx, state.ID.ValueString(), r.body(ctx, plan))
+	body := r.body(ctx, plan)
+	// Roles are REPLACED by the API, and a client's role is the product's:
+	// asked of the server now, so a staff edit never takes a project away.
+	current, err := r.client.GetUser(ctx, state.ID.ValueString())
+	if err != nil {
+		apiError(&resp.Diagnostics, "read the person", err)
+		return
+	}
+	body["roles"] = keepClient(body["roles"].([]string), current)
+	user, err := r.client.UpdateUser(ctx, state.ID.ValueString(), body)
 	if err != nil {
 		apiError(&resp.Diagnostics, "update the person", err)
 		return
@@ -255,6 +265,24 @@ func (r *userResource) ImportState(ctx context.Context, req resource.ImportState
 		id = user.ID
 	}
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), id)...)
+}
+
+// keepClient adds the client role to roles when the person already holds it.
+//
+// The product gives that role to whoever owns a project, and this resource
+// manages staff roles only — it never shows `client`, so sending the
+// configured roles alone would quietly take every project away from a member
+// of staff who is also somebody's client.
+func keepClient(roles []string, current *nuclock.User) []string {
+	if current == nil {
+		return roles
+	}
+	for _, role := range current.Roles {
+		if role == "client" {
+			return append(roles, "client")
+		}
+	}
+	return roles
 }
 
 func userState(u *nuclock.User) userModel {

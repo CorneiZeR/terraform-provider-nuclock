@@ -189,3 +189,44 @@ func TestABlockedPersonComesBack(t *testing.T) {
 		},
 	})
 }
+
+// A member of staff who is also somebody's client keeps the client's role
+// through a staff edit: the API replaces roles, and that one is the product's.
+func TestAClientRoleSurvivesAStaffEdit(t *testing.T) {
+	fake, server := newFakeAPI(t)
+	person := func(name string) string {
+		return fmt.Sprintf(`
+resource "nuclock_user" "ann" {
+  email       = "ann@example.com"
+  public_name = %q
+  roles       = ["executor"]
+}
+`, name)
+	}
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: factories,
+		Steps: []resource.TestStep{
+			{
+				Config: config(server.URL, person("Ann")),
+				Check: func(*terraform.State) error {
+					// The product makes her a client: she was given a project.
+					for _, u := range fake.users {
+						u["roles"] = []any{"executor", "client"}
+					}
+					return nil
+				},
+			},
+			{
+				Config: config(server.URL, person("Ann Lee")),
+				Check: func(*terraform.State) error {
+					for _, u := range fake.users {
+						if !strings.Contains(fmt.Sprint(u["roles"]), "client") {
+							return fmt.Errorf("the client's role was taken away: %v", u["roles"])
+						}
+					}
+					return nil
+				},
+			},
+		},
+	})
+}
