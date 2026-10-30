@@ -1,0 +1,26 @@
+# Build, vet, the resource tests (against the in-memory API), and docs that
+# match the schema. The run against a real nuclock is `make testacc`.
+name: test
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: '1.14.*'
+          terraform_wrapper: false
+      - run: go vet ./...
+      - run: go test ./...
+      - name: Docs match the schema
+        run: |
+          go generate ./...
+          git diff --exit-code -- docs

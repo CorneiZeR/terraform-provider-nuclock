@@ -1,0 +1,6 @@
+/terraform-provider-nuclock
+/dist/
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
