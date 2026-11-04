@@ -19,6 +19,23 @@ resource "nuclock_seat" "ann_on_apollo" {
 }
 ```
 
+## Installing
+
+The provider is published in the
+[OpenTofu Registry](https://search.opentofu.org/provider/corneizer/nuclock/latest).
+OpenTofu finds it by its short address; Terraform installs from that registry
+by hostname:
+
+```hcl
+terraform {
+  required_providers {
+    nuclock = {
+      source = "registry.opentofu.org/corneizer/nuclock" # OpenTofu: "corneizer/nuclock"
+    }
+  }
+}
+```
+
 ## The key
 
 Mint an organisation **service key** in nuclock (Settings → Assistants →
@@ -92,8 +109,9 @@ import {
 
 ## Requirements
 
-Terraform 1.11+ for write-only secrets, 1.14+ for actions and `terraform
-query`. A nuclock new enough to have seats that close (2026-10-30).
+Terraform 1.11+ or OpenTofu 1.11+ for write-only secrets; Terraform 1.14+ for
+actions and `terraform query`, which OpenTofu does not have yet. A nuclock new
+enough to have seats that close (2026-10-30).
 
 ## Developing
 
