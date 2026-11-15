@@ -84,6 +84,10 @@ export NUCLOCK_API_KEY=nuc_…
 | `nuclock_seat` | closed — the person stops seeing the project, every hour stays | reopened, the same seat |
 | `nuclock_integration` | disconnected; imported tasks stay | connected again |
 
+What a destroy put away reads as gone, so it needs no `import`: declared
+again, it comes back as the table says. An import of a blocked person, an
+archived project or a closed seat is refused, and the error says so.
+
 ## Secrets
 
 `api_token_wo` and `webhook_secret_wo` are write-only (Terraform 1.11+): sent

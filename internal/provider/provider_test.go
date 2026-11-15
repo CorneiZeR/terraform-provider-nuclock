@@ -344,3 +344,60 @@ func TestImportOfAMissingIDIsNamed(t *testing.T) {
 		},
 	})
 }
+
+// An import naming something a destroy put away — a blocked person, an
+// archived project, a closed seat — is refused in words, with what to do
+// instead, rather than with "Missing Resource Identity After Read".
+func TestImportOfAPutAwayObjectIsNamed(t *testing.T) {
+	cases := []struct {
+		resource, title string
+		putAway         func(f *fakeAPI)
+		objects         func(f *fakeAPI) map[string]map[string]any
+	}{
+		{"nuclock_user.ann", "The person is blocked",
+			func(f *fakeAPI) {
+				for _, u := range f.users {
+					u["is_active"] = false
+				}
+			},
+			func(f *fakeAPI) map[string]map[string]any { return f.users }},
+		{"nuclock_project.p", "The project is archived",
+			func(f *fakeAPI) {
+				for _, p := range f.projects {
+					p["is_active"] = false
+				}
+			},
+			func(f *fakeAPI) map[string]map[string]any { return f.projects }},
+		{"nuclock_seat.ann", "The seat is closed",
+			func(f *fakeAPI) {
+				for _, s := range f.seats {
+					s["closed_at"] = "2026-11-15T00:00:00Z"
+				}
+			},
+			func(f *fakeAPI) map[string]map[string]any { return f.seats }},
+	}
+	for _, c := range cases {
+		t.Run(c.resource, func(t *testing.T) {
+			fake, server := newFakeAPI(t)
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: factories,
+				Steps: []resource.TestStep{
+					{Config: config(server.URL, team+seat)},
+					{
+						PreConfig:    func() { c.putAway(fake) },
+						Config:       config(server.URL, team+seat),
+						ResourceName: c.resource,
+						ImportState:  true,
+						ImportStateIdFunc: func(*terraform.State) (string, error) {
+							for id := range c.objects(fake) {
+								return id, nil
+							}
+							return "", fmt.Errorf("nothing to import")
+						},
+						ExpectError: regexp.MustCompile(c.title + `[\s\S]*Remove\s+the\s+import`),
+					},
+				},
+			})
+		})
+	}
+}

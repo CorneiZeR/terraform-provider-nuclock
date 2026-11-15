@@ -5,7 +5,7 @@ subcategory: ""
 description: |-
   A person's seat on a project: what puts somebody on it.
   Rates are not here, on purpose. What a seat pays and sells for stays in the tracker; this resource never sends one and never reads one into the state. A new seat takes the person's own base rate and the project's default sale price — a project with no default sale price refuses the seat until somebody sets one.
-  Destroying one closes the seat: the person stops seeing the project and can take no new work there, and every task, hour and invoice behind the seat stays. Declaring a closed seat again reopens it.
+  Destroying one closes the seat: the person stops seeing the project and can take no new work there, and every task, hour and invoice behind the seat stays. Declaring a closed seat again reopens it; importing one is refused, since a declaration is all it takes.
   The key needs the seats.write ability.
 ---
 
@@ -15,7 +15,7 @@ A person's seat on a project: what puts somebody on it.
 
 **Rates are not here, on purpose.** What a seat pays and sells for stays in the tracker; this resource never sends one and never reads one into the state. A new seat takes the person's own base rate and the project's default sale price — a project with no default sale price refuses the seat until somebody sets one.
 
-Destroying one **closes** the seat: the person stops seeing the project and can take no new work there, and every task, hour and invoice behind the seat stays. Declaring a closed seat again reopens it.
+Destroying one **closes** the seat: the person stops seeing the project and can take no new work there, and every task, hour and invoice behind the seat stays. Declaring a closed seat again reopens it; importing one is refused, since a declaration is all it takes.
 
 The key needs the `seats.write` ability.
 

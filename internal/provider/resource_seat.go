@@ -56,7 +56,8 @@ func (r *seatResource) Schema(_ context.Context, _ resource.SchemaRequest, resp 
 			"with no default sale price refuses the seat until somebody sets one.\n\n" +
 			"Destroying one **closes** the seat: the person stops seeing the project and can take " +
 			"no new work there, and every task, hour and invoice behind the seat stays. Declaring " +
-			"a closed seat again reopens it.\n\n" +
+			"a closed seat again reopens it; importing one is refused, since a declaration is all " +
+			"it takes.\n\n" +
 			"The key needs the `seats.write` ability.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
@@ -229,11 +230,15 @@ func (r *seatResource) ImportState(ctx context.Context, req resource.ImportState
 			resp.Diagnostics.AddError("No such seat", "That person holds no seat on that project.")
 			return
 		}
+		if seat.ClosedAt != nil {
+			refusePutAway(&resp.Diagnostics, "seat", "closed", seat.ID)
+			return
+		}
 		id = seat.ID
 	}
-	if req.ID != "" && !importedExists(ctx, &resp.Diagnostics, "seat", id, func(ctx context.Context, id string) error {
-		_, err := r.client.GetSeat(ctx, id)
-		return err
+	if req.ID != "" && !importedExists(ctx, &resp.Diagnostics, "seat", "closed", id, func(ctx context.Context, id string) (bool, error) {
+		seat, err := r.client.GetSeat(ctx, id)
+		return err == nil && seat.ClosedAt == nil, err
 	}) {
 		return
 	}

@@ -5,7 +5,7 @@ subcategory: ""
 description: |-
   A member of the organisation — staff, never a client: clients are made by the product when they are given a project.
   Creating one mails the person a password they must change at the first sign-in. Nothing here ever holds a password: what a plan can compare instead is password_version, password_set_at and the second factor's state.
-  Destroying one blocks the account rather than deleting it — work outlives employment. Declaring a blocked person again lets them back in.
+  Destroying one blocks the account rather than deleting it — work outlives employment. Declaring a blocked person again lets them back in; importing one is refused, since a declaration is all it takes.
   The key needs the people.write ability.
 ---
 
@@ -15,7 +15,7 @@ A member of the organisation — staff, never a client: clients are made by the 
 
 Creating one **mails the person a password** they must change at the first sign-in. Nothing here ever holds a password: what a plan can compare instead is `password_version`, `password_set_at` and the second factor's state.
 
-Destroying one **blocks** the account rather than deleting it — work outlives employment. Declaring a blocked person again lets them back in.
+Destroying one **blocks** the account rather than deleting it — work outlives employment. Declaring a blocked person again lets them back in; importing one is refused, since a declaration is all it takes.
 
 The key needs the `people.write` ability.
 

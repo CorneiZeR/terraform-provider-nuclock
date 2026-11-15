@@ -4,7 +4,7 @@ page_title: "nuclock_project Resource - nuclock"
 subcategory: ""
 description: |-
   A project: the unit work, hours and invoices belong to.
-  Destroying one archives it — it takes no new work, and its hours, invoices and payouts stay. Declaring an archived project again brings it back. Money — the agency fee and the default sale price — is not managed here; it stays in the tracker.
+  Destroying one archives it — it takes no new work, and its hours, invoices and payouts stay. Declaring an archived project again brings it back; importing one is refused, since a declaration is all it takes. Money — the agency fee and the default sale price — is not managed here; it stays in the tracker.
   The key needs the projects.write ability.
 ---
 
@@ -12,7 +12,7 @@ description: |-
 
 A project: the unit work, hours and invoices belong to.
 
-Destroying one **archives** it — it takes no new work, and its hours, invoices and payouts stay. Declaring an archived project again brings it back. Money — the agency fee and the default sale price — is not managed here; it stays in the tracker.
+Destroying one **archives** it — it takes no new work, and its hours, invoices and payouts stay. Declaring an archived project again brings it back; importing one is refused, since a declaration is all it takes. Money — the agency fee and the default sale price — is not managed here; it stays in the tracker.
 
 The key needs the `projects.write` ability.
 

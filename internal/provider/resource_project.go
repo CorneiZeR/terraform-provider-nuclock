@@ -47,7 +47,8 @@ func (r *projectResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "A project: the unit work, hours and invoices belong to.\n\n" +
 			"Destroying one **archives** it — it takes no new work, and its hours, invoices and " +
-			"payouts stay. Declaring an archived project again brings it back. Money — the agency " +
+			"payouts stay. Declaring an archived project again brings it back; importing one is " +
+			"refused, since a declaration is all it takes. Money — the agency " +
 			"fee and the default sale price — is not managed here; it stays in the tracker.\n\n" +
 			"The key needs the `projects.write` ability.",
 		Attributes: map[string]schema.Attribute{
@@ -236,11 +237,15 @@ func (r *projectResource) ImportState(ctx context.Context, req resource.ImportSt
 			resp.Diagnostics.AddError("No such project", "No project leads its keys with "+identity.KeyPrefix.ValueString()+".")
 			return
 		}
+		if !project.IsActive {
+			refusePutAway(&resp.Diagnostics, "project", "archived", identity.KeyPrefix.ValueString())
+			return
+		}
 		id = project.ID
 	}
-	if req.ID != "" && !importedExists(ctx, &resp.Diagnostics, "project", id, func(ctx context.Context, id string) error {
-		_, err := r.client.GetProject(ctx, id)
-		return err
+	if req.ID != "" && !importedExists(ctx, &resp.Diagnostics, "project", "archived", id, func(ctx context.Context, id string) (bool, error) {
+		project, err := r.client.GetProject(ctx, id)
+		return err == nil && project.IsActive, err
 	}) {
 		return
 	}

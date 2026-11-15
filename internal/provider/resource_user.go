@@ -62,7 +62,8 @@ func (r *userResource) Schema(_ context.Context, _ resource.SchemaRequest, resp 
 			"Nothing here ever holds a password: what a plan can compare instead is " +
 			"`password_version`, `password_set_at` and the second factor's state.\n\n" +
 			"Destroying one **blocks** the account rather than deleting it — work outlives " +
-			"employment. Declaring a blocked person again lets them back in.\n\n" +
+			"employment. Declaring a blocked person again lets them back in; importing one is refused, " +
+			"since a declaration is all it takes.\n\n" +
 			"The key needs the `people.write` ability.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{Computed: true, PlanModifiers: kept},
@@ -262,11 +263,15 @@ func (r *userResource) ImportState(ctx context.Context, req resource.ImportState
 			resp.Diagnostics.AddError("No such person", "No account has the address "+identity.Email.ValueString()+".")
 			return
 		}
+		if !user.IsActive {
+			refusePutAway(&resp.Diagnostics, "person", "blocked", identity.Email.ValueString())
+			return
+		}
 		id = user.ID
 	}
-	if req.ID != "" && !importedExists(ctx, &resp.Diagnostics, "person", id, func(ctx context.Context, id string) error {
-		_, err := r.client.GetUser(ctx, id)
-		return err
+	if req.ID != "" && !importedExists(ctx, &resp.Diagnostics, "person", "blocked", id, func(ctx context.Context, id string) (bool, error) {
+		user, err := r.client.GetUser(ctx, id)
+		return err == nil && user.IsActive, err
 	}) {
 		return
 	}
